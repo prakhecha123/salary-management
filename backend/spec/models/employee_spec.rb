@@ -51,6 +51,25 @@ RSpec.describe Employee, type: :model do
     end
   end
 
+  describe "employee_number auto-assignment" do
+    it "assigns a sequential EMP-##### number when none is given" do
+      create(:employee, employee_number: "EMP-00007")
+      employee = build(:employee, employee_number: nil)
+
+      employee.save!
+
+      expect(employee.employee_number).to eq("EMP-00008")
+    end
+
+    it "respects an explicitly provided employee_number" do
+      employee = build(:employee, employee_number: "EMP-12345")
+
+      employee.save!
+
+      expect(employee.employee_number).to eq("EMP-12345")
+    end
+  end
+
   describe "#current_salary_record" do
     it "returns the record with the latest effective_date" do
       employee = create(:employee)

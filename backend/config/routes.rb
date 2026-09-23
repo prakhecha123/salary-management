@@ -7,4 +7,11 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  resources :employees, only: [:index, :show, :create, :update] do
+    resources :salary_records, only: [:create]
+  end
+
+  get "reference_data", to: "reference_data#show"
+  get "analytics/overview", to: "analytics#overview"
 end
