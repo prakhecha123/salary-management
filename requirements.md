@@ -23,8 +23,8 @@ generation), and not the employee self-service view (employees don't log in).
   changed" and "how do we compare across the org." A single mutable
   `salary` column on `Employee` cannot answer either.
 - **Browse & search**: paginated, filterable (country, department, status),
-  searchable (name/employee ID) list of employees — must stay usable at
-  10,000 rows.
+  searchable (name/email/employee ID) list of employees — must stay usable
+  at 10,000 rows.
 - **Employee detail view**: profile + full salary history timeline.
 - **Record a salary change**: add a new salary record with effective date,
   amount, currency, reason.

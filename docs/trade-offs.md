@@ -4,6 +4,47 @@ Running log of non-obvious decisions and why they were made, kept separate
 from `requirements.md` (which is the user-facing scope doc) so this can stay
 a working log without cluttering that document.
 
+## A real seed-data bug found by querying the data, not reading the code
+
+Reading `seeds.rb` looks correct: `num_raises = min(years_employed, 3)` where
+`years_employed` floors `(today - hire_date) / 365`, so a raise at
+`hire_date + N.years` for `N <= years_employed` should never be dated past
+today. It was still possible to generate a future-dated salary record — an
+employee hired 2023-09-24 had "3 years employed" by the 365-day
+approximation on 2026-09-23 (1095 days, exactly 3×365), but
+`2023-09-24 + 3.years` is calendar-aware and lands on 2026-09-24, one day
+later, because 2024 was a leap year and `.years` arithmetic accounts for
+that while the 365-day division doesn't. Only 1 of 10,000 seeded employees
+hit this exact boundary — the kind of bug that's invisible reading the logic
+in isolation and only shows up by actually querying the generated data
+(`SalaryRecord.where("effective_date > ?", Date.current)`), which is why
+that query is worth running after any change to the seed script's date
+math. Fixed by clamping every generated `effective_date` to `today` rather
+than computing a more precise elapsed-time formula — for seed data, "dated
+today instead of tomorrow" is an invisible rounding difference; a
+future-dated salary record is not.
+
+## Terminated employees can have a recent-looking "raise" (accepted)
+
+The seed script generates each employee's raise history from `years_employed`
+alone, independent of `status`. Since termination date isn't modeled (see
+"Explicitly out of scope" in `requirements.md`), a terminated employee gets
+the same raise schedule an active employee with the same hire date would —
+about a quarter of seeded terminated employees end up with a salary record
+dated within the last 6 months, which reads oddly ("why did someone who left
+get a raise last month?") if inspected closely.
+
+This is left as-is rather than patched, because a real fix needs a real
+`termination_date` field, which was a deliberate scope cut — bolting on a
+one-off "don't raise terminated employees past some arbitrary cutoff" rule
+in the seed script would paper over the missing model concept rather than
+represent it. It doesn't affect correctness anywhere that matters:
+`PayrollAnalytics` already filters to `status = 'active'` for all cost/
+distribution figures (see `payroll_analytics_spec.rb`'s "excludes terminated
+employees" test), so no analytics number is inflated by this. It only shows
+up if someone opens a terminated employee's individual history and checks
+the dates — worth knowing about rather than being surprised by it.
+
 ## Salary as a history table, not a column
 
 `Employee` does not have a `salary` column. Instead there is a

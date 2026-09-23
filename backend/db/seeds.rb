@@ -179,11 +179,21 @@ employee_rows.each_with_index do |row, i|
 
   num_raises.times do |raise_number|
     current_salary_usd = (current_salary_usd * rand(1.03..1.08)).round(2)
+    # `years_employed` above approximates a year as 365 days; calendar-aware
+    # `.years` arithmetic can add 366 across a leap day, so the naive
+    # hire_date + N.years can land one day past `today` right at the
+    # boundary (e.g. hired 2023-09-24, 1095 days elapsed reads as exactly 3
+    # years, but 2023-09-24 + 3.years is 2026-09-24 because 2024 was a leap
+    # year — one day ahead of `today`). Clamping is the fix, not a more
+    # precise elapsed-time calculation: a salary record dated "today" for an
+    # employee whose true 3-year mark is tomorrow is a fine approximation
+    # for seed data; a future-dated salary record is not.
+    effective_date = [meta[:hire_date] + (raise_number + 1).years, today].min
     salary_rows << {
       employee_id: employee_id,
       amount: usd_to_local(current_salary_usd, currency),
       currency: currency,
-      effective_date: meta[:hire_date] + (raise_number + 1).years,
+      effective_date: effective_date,
       reason: "Annual raise",
       created_at: now,
       updated_at: now
