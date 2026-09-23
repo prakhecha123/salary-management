@@ -33,3 +33,19 @@ rejected, so the development process is auditable rather than opaque.
    pg for production — each addition tied to a concrete need already
    identified in the requirements/trade-offs docs, not a default kitchen-sink
    Gemfile.
+4. **Models, API, and tests.** Built `Employee`/`SalaryRecord`/`ExchangeRate`
+   plus a `PayrollAnalytics` service (SQL window function over salary
+   history, joined to exchange rates, aggregated in the database rather than
+   in Ruby, so it scales to 10k+ employees). Asked Claude to write RSpec
+   coverage alongside each piece rather than after the fact; reviewed each
+   spec for whether it actually tested the interesting behavior (e.g. the
+   window-function "latest salary per employee" logic, the transactional
+   employee+initial-salary create, terminated employees excluded from
+   payroll cost) rather than trivial happy paths.
+5. **Seed script.** Asked for a 10,000-employee seed generating realistic,
+   defensible salary bands (department base pay × seniority level × country
+   cost-of-living factor, converted to local currency) rather than uniform
+   random numbers, specifically so the analytics views would show a
+   plausible distribution instead of noise. Required bulk `insert_all!`
+   instead of per-record `.create` for performance — verified by timing it
+   (~3 seconds for 10k employees + ~33k salary records) rather than assuming.
