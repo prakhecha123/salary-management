@@ -1,0 +1,13 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-color: #f9f9f7;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
