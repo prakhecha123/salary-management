@@ -4,9 +4,19 @@ A web application for an HR Manager to manage salary data for ACME's ~10,000
 employees across multiple countries, and answer questions about how the
 organization pays people. Built for the Incubyte take-home assessment.
 
-See [`requirements.md`](requirements.md) for scope and explicit non-goals,
-and [`docs/trade-offs.md`](docs/trade-offs.md) / [`docs/ai-workflow.md`](docs/ai-workflow.md)
-for design reasoning and how AI tools were used while building this.
+See [`requirements.md`](requirements.md) for scope and explicit non-goals.
+Design/engineering reasoning is split across a few docs rather than one long
+file:
+
+- [`docs/architecture.md`](docs/architecture.md) — system, data model, and
+  request-flow diagrams
+- [`docs/trade-offs.md`](docs/trade-offs.md) — non-obvious decisions and why
+- [`docs/performance.md`](docs/performance.md) — concrete, verified
+  performance decisions at the 10k-employee scale
+- [`docs/ai-workflow.md`](docs/ai-workflow.md) — how AI tools were used
+  while building this
+- [`docs/demo-script.md`](docs/demo-script.md) — the walkthrough for the
+  demo video
 
 ## Stack
 
@@ -36,6 +46,9 @@ cd frontend
 npm install
 npm run dev               # http://localhost:5173
 ```
+
+Requires Node 16+ (Vite is deliberately pinned to v4 / Vitest to v0.34 for
+Node 16 compatibility — see `docs/trade-offs.md`).
 
 By default the frontend talks to `http://localhost:3001`. Override with a
 `.env.local` file setting `VITE_API_URL` if the API runs elsewhere.
