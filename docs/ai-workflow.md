@@ -49,3 +49,21 @@ rejected, so the development process is auditable rather than opaque.
    plausible distribution instead of noise. Required bulk `insert_all!`
    instead of per-record `.create` for performance — verified by timing it
    (~3 seconds for 10k employees + ~33k salary records) rather than assuming.
+6. **Frontend build and real-browser verification.** Built the React app,
+   then actually drove it in a headless browser (Playwright) against the
+   live dev servers rather than trusting that lint + unit tests passing
+   meant the UI worked — this caught two real things unit tests wouldn't:
+   an Ant Design console warning from using the static `message` API
+   outside its theme context (fixed by wrapping the app in antd's `<App>`
+   component), and confirmed the create-employee → record-a-raise flow
+   actually persists and re-renders correctly end to end. The verification
+   script itself was disposable tooling, not a deliverable, so it and its
+   screenshots were removed once it had done its job rather than left in
+   the repo.
+7. **Dependency security audit.** Ran `bundler-audit` and `npm audit`
+   proactively rather than assuming a fresh `rails new`/`npm create vite`
+   scaffold was safe by construction. Found and fixed three real, disclosed
+   CVEs: `sqlite3` 1.7.3 (two use-after-free advisories, fixed by bumping to
+   `~> 2.9`) and Rails 7.1.6's activesupport (an XSS and a DoS advisory,
+   fixed by moving to 7.2.3.2) — full RSpec suite re-verified green after
+   each bump before moving on.

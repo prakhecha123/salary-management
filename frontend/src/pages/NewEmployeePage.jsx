@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Select, DatePicker, InputNumber, Button, Typography, Card, message } from "antd";
+import { Form, Input, Select, DatePicker, InputNumber, Button, Typography, Card, App } from "antd";
 import dayjs from "dayjs";
 import { createEmployee } from "../api/employees";
 import useReferenceData from "../context/useReferenceData";
@@ -8,6 +8,7 @@ const { Title } = Typography;
 
 export default function NewEmployeePage() {
   const navigate = useNavigate();
+  const { message } = App.useApp();
   const { countries, departments, statuses, currencies, country_currencies } = useReferenceData();
   const [form] = Form.useForm();
 

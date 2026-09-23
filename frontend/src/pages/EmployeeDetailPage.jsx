@@ -14,7 +14,7 @@ import {
   Typography,
   Space,
   Skeleton,
-  message,
+  App,
 } from "antd";
 import dayjs from "dayjs";
 import { fetchEmployee, addSalaryRecord, updateEmployee } from "../api/employees";
@@ -27,6 +27,7 @@ const STATUS_COLORS = { active: "green", terminated: "default" };
 
 export default function EmployeeDetailPage() {
   const { id } = useParams();
+  const { message } = App.useApp();
   const { departments, statuses, currencies, country_currencies } = useReferenceData();
 
   const [employee, setEmployee] = useState(null);
@@ -138,11 +139,15 @@ export default function EmployeeDetailPage() {
         <Descriptions.Item label="Department">{employee.department}</Descriptions.Item>
         <Descriptions.Item label="Job Title">{employee.job_title}</Descriptions.Item>
         <Descriptions.Item label="Current Salary">
-          {employee.current_salary
-            ? `${formatMoney(employee.current_salary.amount, employee.current_salary.currency)} (${formatUsd(
-                employee.current_salary.amount_usd
-              )})`
-            : "—"}
+          {employee.current_salary ? (
+            <>
+              {formatMoney(employee.current_salary.amount, employee.current_salary.currency)}
+              {employee.current_salary.currency !== "USD" &&
+                ` (${formatUsd(employee.current_salary.amount_usd)})`}
+            </>
+          ) : (
+            "—"
+          )}
         </Descriptions.Item>
       </Descriptions>
 
