@@ -1,0 +1,59 @@
+# Trade-offs & Design Notes
+
+Running log of non-obvious decisions and why they were made, kept separate
+from `requirements.md` (which is the user-facing scope doc) so this can stay
+a working log without cluttering that document.
+
+## Salary as a history table, not a column
+
+`Employee` does not have a `salary` column. Instead there is a
+`SalaryRecord` model: `employee_id`, `amount`, `currency`, `effective_date`,
+`reason`. An employee's "current salary" is derived (the record with the
+latest `effective_date`), not stored redundantly.
+
+Why: the problem statement's core question is "how does the org pay people,"
+which is inherently about change over time (raises, adjustments, offer vs.
+current) — not just a snapshot. Modeling salary as an immutable append-only
+history means:
+
+- Nothing is ever overwritten, so there's an audit trail for free.
+- "What was this person's salary in March" and "how many raises has this
+  department given this year" are simple queries, not reconstructions from
+  a changelog no one built.
+- The trade-off: slightly more query complexity to get "current salary"
+  (need latest-per-employee), which is a legitimate cost, mitigated with a
+  DB index on `(employee_id, effective_date)`.
+
+## SQLite in dev/test, Postgres in production
+
+Rails' own convention is same-adapter everywhere to avoid adapter-specific
+SQL differences. Here they deliberately differ:
+
+- The assessment explicitly suggests SQLite ("Relational database of your
+  choice, like SQLite") for simplicity — no local Postgres install needed to
+  run this.
+- But the deliverable requires a fully working _deployed_ app, and Render's
+  free web service tier has an ephemeral filesystem — a SQLite file would be
+  wiped on every deploy or restart, silently losing all seeded/entered data.
+- Postgres in production avoids that; the app only uses standard ActiveRecord
+  (no adapter-specific SQL), so the risk of dev/prod behavior divergence is
+  low and acceptable for this scope.
+
+## No live FX conversion
+
+Cross-country aggregates (e.g. total payroll cost) need one currency. A
+static, seeded exchange-rate table converts to USD for aggregation only;
+per-employee records always show their real local-currency amount. A live
+FX API was deliberately rejected for a take-home: it adds a runtime external
+dependency and a key-management concern for no benefit the assessment
+actually needs. Documented here so it doesn't read as an oversight — it's a
+scoped trade-off with a known cost (rates go stale until manually updated).
+
+## Component library: Ant Design over Material UI / Chakra
+
+This is fundamentally an internal admin/data tool: a 10,000-row searchable,
+filterable, sortable table is the single most-used piece of UI. Ant Design's
+`Table` component supports server-side pagination/sorting/filtering
+natively, which is exactly the shape of the core interaction — using it
+avoids hand-rolling pagination logic in components MUI/Chakra would otherwise
+require building.
