@@ -66,4 +66,57 @@ RSpec.describe PayrollAnalytics do
       expect(result[:average_salary_usd]).to eq(150_000.0)
     end
   end
+
+  describe "median_salary_usd" do
+    def create_employee_with_salary(amount, number:)
+      employee = create(:employee, employee_number: number, email: "#{number}@example.com")
+      create(:salary_record, employee: employee, amount: amount, currency: "USD")
+      employee
+    end
+
+    it "takes the middle value for an odd number of employees, distinct from the mean" do
+      [100_000, 200_000, 900_000].each_with_index do |amount, i|
+        create_employee_with_salary(amount, number: "EMP-0000#{i}")
+      end
+
+      result = described_class.overall
+
+      expect(result[:median_salary_usd]).to eq(200_000.0)
+      expect(result[:average_salary_usd]).to eq(400_000.0)
+    end
+
+    it "averages the two middle values for an even number of employees" do
+      [100_000, 200_000, 300_000, 900_000].each_with_index do |amount, i|
+        create_employee_with_salary(amount, number: "EMP-0000#{i}")
+      end
+
+      result = described_class.overall
+
+      expect(result[:median_salary_usd]).to eq(250_000.0)
+      expect(result[:average_salary_usd]).to eq(375_000.0)
+    end
+
+    it "is the single employee's salary for a group of one" do
+      create_employee_with_salary(123_000, number: "EMP-00001")
+
+      result = described_class.overall
+
+      expect(result[:median_salary_usd]).to eq(123_000.0)
+    end
+
+    it "computes medians independently per country" do
+      us = create(:employee, country: "United States", employee_number: "EMP-00001", email: "us@example.com")
+      create(:salary_record, employee: us, amount: 100_000, currency: "USD")
+
+      india_low = create(:employee, country: "India", employee_number: "EMP-00002", email: "i1@example.com")
+      create(:salary_record, employee: india_low, amount: 1_000_000, currency: "INR")
+      india_high = create(:employee, country: "India", employee_number: "EMP-00003", email: "i2@example.com")
+      create(:salary_record, employee: india_high, amount: 3_000_000, currency: "INR")
+
+      results = described_class.by_country.index_by { |row| row[:country] }
+
+      expect(results["United States"][:median_salary_usd]).to eq(100_000.0)
+      expect(results["India"][:median_salary_usd]).to eq(20_000.0)
+    end
+  end
 end

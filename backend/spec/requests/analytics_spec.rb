@@ -13,7 +13,9 @@ RSpec.describe "Analytics API", type: :request do
       json = response.parsed_body
       expect(response).to have_http_status(:ok)
       expect(json["overall"]["headcount"]).to eq(1)
+      expect(json["overall"]["median_salary_usd"]).to eq(120_000.0)
       expect(json["by_country"].first["country"]).to eq("United States")
+      expect(json["by_country"].first["median_salary_usd"]).to eq(120_000.0)
       expect(json["by_department"].first["department"]).to eq("Engineering")
     end
   end

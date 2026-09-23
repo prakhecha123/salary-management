@@ -22,6 +22,12 @@ const breakdownColumns = (labelTitle, labelKey) => [
     align: "right",
     render: formatUsd,
   },
+  {
+    title: "Median Salary (USD)",
+    dataIndex: "median_salary_usd",
+    align: "right",
+    render: formatUsd,
+  },
   { title: "Min (USD)", dataIndex: "min_salary_usd", align: "right", render: formatUsd },
   { title: "Max (USD)", dataIndex: "max_salary_usd", align: "right", render: formatUsd },
 ];
@@ -57,6 +63,9 @@ export default function DashboardPage() {
         </Col>
         <Col flex="1">
           <StatTile label="Average Salary" value={formatUsd(overall.average_salary_usd)} />
+        </Col>
+        <Col flex="1">
+          <StatTile label="Median Salary" value={formatUsd(overall.median_salary_usd)} />
         </Col>
       </Row>
 
