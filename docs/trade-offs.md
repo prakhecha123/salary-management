@@ -49,6 +49,16 @@ dependency and a key-management concern for no benefit the assessment
 actually needs. Documented here so it doesn't read as an oversight — it's a
 scoped trade-off with a known cost (rates go stale until manually updated).
 
+## Unoptimized frontend bundle
+
+The production build is a single ~1.2MB (385KB gzipped) JS bundle — Vite
+warns about this. Ant Design accounts for most of it. Code-splitting (route-
+based lazy loading, `manualChunks`) would fix this properly, but for an
+internal HR tool used by a handful of people on a fast connection, load time
+isn't the constraint worth spending assessment time on; noted here so it
+reads as a known, deliberately deferred optimization rather than an
+oversight.
+
 ## Component library: Ant Design over Material UI / Chakra
 
 This is fundamentally an internal admin/data tool: a 10,000-row searchable,
