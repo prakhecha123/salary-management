@@ -59,6 +59,41 @@ isn't the constraint worth spending assessment time on; noted here so it
 reads as a known, deliberately deferred optimization rather than an
 oversight.
 
+## Frontend dev-tooling on Node 16, not 20
+
+This machine's available Node is 16.15.1; installing Node 20 via Homebrew
+repeatedly failed on this network (a dependency patch fetch from
+`ftp.gnu.org` timed out both times, ~15+ minutes each attempt). Given that,
+Vite is pinned to v4 and Vitest to v0.34 — the last major lines that support
+Node 16 — rather than the project silently breaking on `npm install` for
+anyone else on an older Node.
+
+Running `npm audit` on this pin set surfaces two dev-tooling advisories that
+were deliberately left unpatched, since fixing them requires Vite 6+/Vitest
+3+, which need Node 18+:
+
+- **esbuild ≤0.24.2 (moderate, GHSA-67mh-4wv8-2f99):** a malicious website
+  can query Vite's local dev server. This only matters if the dev server is
+  reachable from an untrusted network while running, which it never is here
+  (local dev only; the deployed build is static files served by Render, not
+  this dev server).
+- **Vitest <3.2.6 (critical, GHSA-5xrq-8626-4rwp):** arbitrary file read via
+  the Vitest UI server. This project never runs `vitest --ui`, so the
+  vulnerable code path is never invoked. `npm test` runs `vitest run`, which
+  doesn't start that server.
+
+A third advisory — a real one, `react-router` 6.0.0–7.17.0's open-redirect/
+deserialization CVEs — **was** fixed, by bumping to `react-router-dom@7.18.4`
+directly (it still declares `node >=14.0.0`, so it didn't require the Node
+20 upgrade the other two would have). Likewise, two backend advisories found
+via `bundler-audit` (`sqlite3` 1.7.3's use-after-free CVEs, and
+`activesupport` 7.1.6's XSS/DoS CVEs) were fixed outright by bumping to
+`sqlite3 ~> 2.9` and Rails 7.2.3.2 — see the git history for both.
+
+The distinction driving what got fixed vs. deferred: exploitability given
+how this app actually runs, not just advisory severity labels taken at face
+value.
+
 ## Component library: Ant Design over Material UI / Chakra
 
 This is fundamentally an internal admin/data tool: a 10,000-row searchable,
