@@ -56,7 +56,10 @@ class EmployeesController < ApplicationController
   private
 
   def employee
-    @employee ||= Employee.find(params[:id])
+    # Preloaded so EmployeeSerializer.detail's current-salary lookup and
+    # full-history list share one query instead of two: `.first` and `.map`
+    # on an *unloaded* has_many each issue their own SELECT.
+    @employee ||= Employee.includes(:salary_records).find(params[:id])
   end
 
   def per_page_param

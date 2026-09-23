@@ -22,8 +22,12 @@ Verified, not assumed: timed with `time bundle exec rails db:seed` —
 window function (`ROW_NUMBER() OVER (PARTITION BY employee_id ORDER BY
 effective_date DESC, id DESC)`) to find each employee's current salary,
 joined to `exchange_rates` for USD conversion, aggregated with
-`SUM`/`AVG`/`MIN`/`MAX` — all inside one query per breakdown (by-country,
-by-department, overall).
+`SUM`/`AVG`/`MIN`/`MAX` in one query per breakdown, plus a second query for
+the median (a `ROW_NUMBER`/`COUNT` "middle row" pattern — see the comment in
+`payroll_analytics.rb`) merged into the same result in Ruby. Two queries
+instead of one because a database-portable median can't be expressed as a
+plain aggregate function the way `AVG`/`MIN`/`MAX` can — it still runs
+entirely in SQL, just as two statements rather than one.
 
 The alternative — loading every `SalaryRecord` into Ruby and reducing over
 them — would pull tens of thousands of rows into the app process on every
@@ -76,6 +80,21 @@ query), but with only 7 currencies total the worst case is 7 real queries
 per request regardless of how many of the 100 rows on the page there are.
 Adding an application-level cache on top would be solving a cost that
 doesn't exist yet.
+
+## A real N+1 found and fixed on the employee detail endpoint
+
+`GET /employees/:id` used to run two separate `SalaryRecord` queries for one
+employee: `current_salary_record` (`salary_records.first`) and the full
+history list (`salary_records.map`) each issued their own `SELECT`, because
+calling `.first` on a not-yet-loaded `has_many` executes a targeted query
+without marking the association loaded — so the following `.map` triggers a
+second one. Fixed by eager-loading in the controller
+(`Employee.includes(:salary_records).find(...)`), the same pattern already
+used on the list endpoint, so both accessors share one preloaded array.
+Verified by clearing the development log, hitting the endpoint, and counting
+query lines before (2 `SalaryRecord Load`) and after (1) the fix — the kind
+of thing that's easy to introduce silently and easy to miss without actually
+reading the SQL log rather than assuming `.includes` elsewhere covers it.
 
 ## What's deliberately not optimized
 

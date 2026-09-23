@@ -69,6 +69,21 @@ RSpec.describe "Employees API", type: :request do
 
       expect(response).to have_http_status(:not_found)
     end
+
+    it "loads salary records once, not once per accessor" do
+      employee = create(:employee, employee_number: "EMP-00001", email: "e@example.com")
+      create(:salary_record, employee: employee, amount: 80_000, effective_date: Date.new(2021, 1, 1))
+      create(:salary_record, employee: employee, amount: 95_000, effective_date: Date.new(2023, 1, 1))
+
+      queries = []
+      callback = ->(*, payload) { queries << payload[:sql] if payload[:sql].include?("salary_records") }
+
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+        get "/employees/#{employee.id}"
+      end
+
+      expect(queries.size).to eq(1)
+    end
   end
 
   describe "POST /employees" do
