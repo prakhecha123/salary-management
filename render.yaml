@@ -5,7 +5,7 @@ databases:
 services:
   - type: web
     name: salary-management-api
-    env: ruby
+    runtime: ruby
     plan: free
     rootDir: backend
     buildCommand: "bundle install && bundle exec rails db:migrate"
@@ -22,9 +22,9 @@ services:
       - key: FRONTEND_ORIGIN
         value: https://salary-management-frontend.onrender.com
 
-  - type: static
+  - type: web
     name: salary-management-frontend
-    plan: free
+    runtime: static
     rootDir: frontend
     buildCommand: "npm install && npm run build"
     staticPublishPath: dist
