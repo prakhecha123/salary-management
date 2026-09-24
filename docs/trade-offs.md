@@ -76,9 +76,23 @@ SQL differences. Here they deliberately differ:
 - But the deliverable requires a fully working _deployed_ app, and Render's
   free web service tier has an ephemeral filesystem — a SQLite file would be
   wiped on every deploy or restart, silently losing all seeded/entered data.
-- Postgres in production avoids that; the app only uses standard ActiveRecord
-  (no adapter-specific SQL), so the risk of dev/prod behavior divergence is
-  low and acceptable for this scope.
+- Postgres in production avoids that.
+
+**Update, post-deploy:** the claim that this app "only uses standard
+ActiveRecord, so the risk of dev/prod divergence is low" turned out to be
+wrong in practice. `PayrollAnalytics` uses raw SQL (a window-function
+median), and it hit a real SQLite-vs-Postgres SQL standard difference on
+first production request: SQLite permits selecting a bare non-aggregated
+column alongside an aggregate with no `GROUP BY`; Postgres rejects it
+(`PG::GroupingError`). Every one of the 51 RSpec examples passed, because
+the entire suite runs against SQLite — none of them could have caught this.
+Fixed (see git history), but the honest lesson is that "low risk" was an
+untested assumption, not a verified one, for any code path that drops to
+raw SQL. The actual mitigation that matters isn't the assumption — it's
+that this was caught and fixed within minutes of the first production
+request by running the failing query directly against the real production
+database (see `DEPLOYMENT.md`'s "Gotchas" section), not by trusting the
+local green test suite.
 
 ## No live FX conversion
 
