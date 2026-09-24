@@ -9,6 +9,8 @@ organization pays people. Built for the Incubyte take-home assessment.
 free tier, so the first request after ~15 minutes of inactivity takes
 30–60s to wake up.
 
+**Demo video**: https://drive.google.com/file/d/1NVZqqFBvlhtyLXP7begFwlJ-PJebd6gs/view?usp=sharing
+
 See [`requirements.md`](requirements.md) for scope and explicit non-goals.
 Design/engineering reasoning is split across a few docs rather than one long
 file:
