@@ -106,8 +106,14 @@ class PayrollAnalytics
           COUNT(*) OVER (#{partition_clause}) AS cnt
         FROM current_usd_salaries
       )
+      -- MIN(group_key), not a bare group_key: for the ungrouped (overall)
+      -- case there's no GROUP BY at all, and Postgres (unlike SQLite)
+      -- rejects selecting a non-aggregated column alongside an aggregate
+      -- with no GROUP BY clause. Wrapping in MIN() is a no-op when GROUP BY
+      -- IS present (group_key is constant within each group) and satisfies
+      -- Postgres when it isn't.
       SELECT
-        group_key,
+        MIN(group_key) AS group_key,
         AVG(amount_usd) AS median_salary_usd
       FROM ranked
       WHERE rn IN ((cnt + 1) / 2, (cnt + 2) / 2)
